@@ -34,8 +34,10 @@ Available database-backed routes:
 
 - `GET /api/sites` reads active plantation sites.
 - `POST /api/sites` creates a plantation site from a JSON body.
+- `PUT /api/sites/:siteId` updates an active plantation site.
 - `GET /api/sites/:siteId/observations` reads observations for a site.
 - `POST /api/sites/:siteId/observations` creates an observation after verifying the site exists.
+- `PUT /api/sites/:siteId/observations/:observationId` updates an observation belonging to the site.
 - `GET /health` reports API and database connection status.
 
 POST request bodies are JSON objects. A site accepts `name`, `region`, `plantedTrees`,
