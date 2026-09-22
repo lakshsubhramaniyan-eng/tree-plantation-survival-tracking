@@ -1,15 +1,15 @@
-import { model, models, Schema, type InferSchemaType } from 'mongoose'
+import mongoose, { type InferSchemaType } from 'mongoose'
 
-const observationSchema = new Schema(
+const observationSchema = new mongoose.Schema(
   {
     siteId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Site',
       required: true,
       index: true,
     },
     plotId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Plot',
       index: true,
     },
@@ -46,4 +46,4 @@ const observationSchema = new Schema(
 observationSchema.index({ siteId: 1, observedAt: -1 })
 
 export type Observation = InferSchemaType<typeof observationSchema>
-export const ObservationModel = models.Observation || model('Observation', observationSchema)
+export const ObservationModel = mongoose.models.Observation || mongoose.model('Observation', observationSchema)
