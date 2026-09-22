@@ -1,121 +1,37 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { FilterBar } from './components/FilterBar'
+import { MetricCard } from './components/MetricCard'
+import { SiteTable, type Site } from './components/SiteTable'
+import { TrendChart } from './components/TrendChart'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [region, setRegion] = useState('All regions')
+  const [period, setPeriod] = useState('Last 30 days')
+  const sites: Site[] = [
+    { name: 'Mawingu South', region: 'North district', trees: 12400, survival: 91, status: 'On track' },
+    { name: 'Kijani Ridge', region: 'Western slopes', trees: 9800, survival: 78, status: 'Needs attention' },
+    { name: 'Mtoni Watershed', region: 'Coastal belt', trees: 15750, survival: 84, status: 'On track' },
+  ]
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <main className="dashboard-shell">
+      <header className="topbar">
+        <div className="brand-mark"><span>TS</span><div><strong>Treebase</strong><small>Survival tracking</small></div></div>
+        <div className="user-menu"><span className="avatar">LP</span><span>Field coordinator</span><button aria-label="Open account menu">⌄</button></div>
+      </header>
+      <div className="dashboard-content">
+        <div className="page-heading"><div><p className="eyebrow">Wednesday, 23 September 2026</p><h1>Good morning, Lakshmi</h1><p>Here is how your plantations are performing today.</p></div><button className="button button--primary" type="button">+ Add observation</button></div>
+        <FilterBar region={region} period={period} onRegionChange={setRegion} onPeriodChange={setPeriod} />
+        <section className="metrics-grid" aria-label="Portfolio summary">
+          <MetricCard label="Overall survival" value="82.4%" detail="Up 3.8% from last period" tone="positive" />
+          <MetricCard label="Trees surviving" value="31,642" detail="of 38,400 planted" />
+          <MetricCard label="Sites monitored" value="12" detail="3 need attention" tone="warning" />
+        </section>
+        <div className="dashboard-grid"><TrendChart points={[{ month: 'Apr', value: 71 }, { month: 'May', value: 74 }, { month: 'Jun', value: 76 }, { month: 'Jul', value: 78 }, { month: 'Aug', value: 80 }, { month: 'Sep', value: 82 }]} /><aside className="panel attention-panel"><div className="panel-heading"><div><p className="eyebrow">Action queue</p><h2>Needs attention</h2></div><span className="attention-count">3</span></div><p className="attention-copy">These sites are below the 80% survival threshold and may need a field visit.</p><button className="button button--outline" type="button">Review sites <span>→</span></button></aside></div>
+        <SiteTable sites={sites} region={region} />
+      </div>
+    </main>
   )
 }
 
