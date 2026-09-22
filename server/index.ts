@@ -55,6 +55,42 @@ app.post('/api/sites', async (request, response, next) => {
   }
 })
 
+app.put('/api/sites/:siteId', async (request, response, next) => {
+  try {
+    if (!mongoose.isValidObjectId(request.params.siteId)) {
+      response.status(400).json({ error: 'siteId must be a valid MongoDB ObjectId' })
+      return
+    }
+
+    const body = getObjectBody(request.body)
+    if (!body) {
+      response.status(400).json({ error: 'Request body must be a JSON object' })
+      return
+    }
+
+    const site = await SiteModel.findOneAndUpdate(
+      { _id: request.params.siteId, status: 'active' },
+      {
+        name: getField<string>(body, 'name'),
+        region: getField<string>(body, 'region'),
+        plantedTrees: getField<number>(body, 'plantedTrees'),
+        targetSurvivalRate: getField<number>(body, 'targetSurvivalRate'),
+        status: getField<'active' | 'archived'>(body, 'status'),
+      },
+      { new: true, runValidators: true },
+    ).lean()
+
+    if (!site) {
+      response.status(404).json({ error: 'Active site not found' })
+      return
+    }
+
+    response.json(site)
+  } catch (error) {
+    next(error)
+  }
+})
+
 app.get('/api/sites/:siteId/observations', async (request, response, next) => {
   try {
     if (!mongoose.isValidObjectId(request.params.siteId)) {
@@ -100,6 +136,43 @@ app.post('/api/sites/:siteId/observations', async (request, response, next) => {
       siteId: request.params.siteId,
     })
     response.status(201).json(observation)
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.put('/api/sites/:siteId/observations/:observationId', async (request, response, next) => {
+  try {
+    if (!mongoose.isValidObjectId(request.params.siteId) || !mongoose.isValidObjectId(request.params.observationId)) {
+      response.status(400).json({ error: 'siteId and observationId must be valid MongoDB ObjectIds' })
+      return
+    }
+
+    const body = getObjectBody(request.body)
+    if (!body) {
+      response.status(400).json({ error: 'Request body must be a JSON object' })
+      return
+    }
+
+    const observation = await ObservationModel.findOneAndUpdate(
+      { _id: request.params.observationId, siteId: request.params.siteId },
+      {
+        plotId: getField<mongoose.Types.ObjectId | string>(body, 'plotId'),
+        observedAt: getField<Date | string>(body, 'observedAt'),
+        observedBy: getField<string>(body, 'observedBy'),
+        survivingTrees: getField<number>(body, 'survivingTrees'),
+        notes: getField<string>(body, 'notes'),
+        source: getField<'manual' | 'csv'>(body, 'source'),
+      },
+      { new: true, runValidators: true },
+    ).lean()
+
+    if (!observation) {
+      response.status(404).json({ error: 'Observation not found for this site' })
+      return
+    }
+
+    response.json(observation)
   } catch (error) {
     next(error)
   }
