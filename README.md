@@ -38,6 +38,12 @@ Available database-backed routes:
 - `POST /api/sites/:siteId/observations` creates an observation after verifying the site exists.
 - `GET /health` reports API and database connection status.
 
+POST request bodies are JSON objects. A site accepts `name`, `region`, `plantedTrees`,
+`targetSurvivalRate`, and `status`. An observation accepts `plotId`, `observedAt`,
+`observedBy`, `survivingTrees`, `notes`, and `source`; its `siteId` comes from the URL.
+Validation failures return `400`, missing active sites return `404`, and duplicate site
+names within a region return `409`.
+
 ### Video walkthrough outline
 
 Use the linked wireframe for a 3-5 minute recording:
