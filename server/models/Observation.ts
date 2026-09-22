@@ -46,4 +46,6 @@ const observationSchema = new mongoose.Schema(
 observationSchema.index({ siteId: 1, observedAt: -1 })
 
 export type Observation = InferSchemaType<typeof observationSchema>
-export const ObservationModel = mongoose.models.Observation || mongoose.model('Observation', observationSchema)
+export const ObservationModel =
+  (mongoose.models.Observation as mongoose.Model<Observation> | undefined) ||
+  mongoose.model<Observation>('Observation', observationSchema)

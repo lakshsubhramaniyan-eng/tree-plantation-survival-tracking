@@ -22,6 +22,25 @@ app.get('/api/sites', async (_request, response, next) => {
   }
 })
 
+app.get('/api/sites/:siteId', async (request, response, next) => {
+  try {
+    if (!mongoose.isValidObjectId(request.params.siteId)) {
+      response.status(400).json({ error: 'siteId must be a valid MongoDB ObjectId' })
+      return
+    }
+
+    const site = await SiteModel.findOne({ _id: request.params.siteId, status: 'active' }).lean()
+    if (!site) {
+      response.status(404).json({ error: 'Active site not found' })
+      return
+    }
+
+    response.json(site)
+  } catch (error) {
+    next(error)
+  }
+})
+
 app.post('/api/sites', async (request, response, next) => {
   try {
     const site = await SiteModel.create(request.body)
