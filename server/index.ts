@@ -9,6 +9,18 @@ const port = Number(process.env.PORT ?? 3000)
 
 app.use(express.json())
 
+function getObjectBody(body: unknown): Record<string, unknown> | null {
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return null
+  }
+
+  return body as Record<string, unknown>
+}
+
+function getField<T>(body: Record<string, unknown>, field: string): T | undefined {
+  return body[field] as T | undefined
+}
+
 app.get('/health', (_request, response) => {
   response.json({ status: 'ok', database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' })
 })
@@ -43,7 +55,19 @@ app.get('/api/sites/:siteId', async (request, response, next) => {
 
 app.post('/api/sites', async (request, response, next) => {
   try {
-    const site = await SiteModel.create(request.body)
+    const body = getObjectBody(request.body)
+    if (!body) {
+      response.status(400).json({ error: 'Request body must be a JSON object' })
+      return
+    }
+
+    const site = await SiteModel.create({
+      name: getField<string>(body, 'name'),
+      region: getField<string>(body, 'region'),
+      plantedTrees: getField<number>(body, 'plantedTrees'),
+      targetSurvivalRate: getField<number>(body, 'targetSurvivalRate'),
+      status: getField<'active' | 'archived'>(body, 'status'),
+    })
     response.status(201).json(site)
   } catch (error) {
     next(error)
@@ -73,6 +97,12 @@ app.post('/api/sites/:siteId/observations', async (request, response, next) => {
       return
     }
 
+    const body = getObjectBody(request.body)
+    if (!body) {
+      response.status(400).json({ error: 'Request body must be a JSON object' })
+      return
+    }
+
     const siteExists = await SiteModel.exists({ _id: request.params.siteId, status: 'active' })
     if (!siteExists) {
       response.status(404).json({ error: 'Active site not found' })
@@ -80,7 +110,12 @@ app.post('/api/sites/:siteId/observations', async (request, response, next) => {
     }
 
     const observation = await ObservationModel.create({
-      ...request.body,
+      plotId: getField<mongoose.Types.ObjectId | string>(body, 'plotId'),
+      observedAt: getField<Date | string>(body, 'observedAt'),
+      observedBy: getField<string>(body, 'observedBy'),
+      survivingTrees: getField<number>(body, 'survivingTrees'),
+      notes: getField<string>(body, 'notes'),
+      source: getField<'manual' | 'csv'>(body, 'source'),
       siteId: request.params.siteId,
     })
     response.status(201).json(observation)
@@ -92,6 +127,11 @@ app.post('/api/sites/:siteId/observations', async (request, response, next) => {
 app.use((error: unknown, _request: Request, response: Response, _next: NextFunction) => {
   if (error instanceof mongoose.Error.ValidationError) {
     response.status(400).json({ error: error.message })
+    return
+  }
+
+  if (error instanceof mongoose.Error && 'code' in error && error.code === 11000) {
+    response.status(409).json({ error: 'A record with the same unique fields already exists' })
     return
   }
 
