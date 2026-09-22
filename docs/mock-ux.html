@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tree Survival | Mock UX</title>
+  <style>
+    :root {
+      --ink: #1d2a24;
+      --muted: #65746b;
+      --line: #dce5df;
+      --paper: #f7f9f5;
+      --white: #ffffff;
+      --forest: #176b4d;
+      --forest-dark: #0e4834;
+      --mint: #dff1e6;
+      --amber: #a96818;
+      --amber-bg: #fff1d8;
+      --red: #ad443d;
+      --red-bg: #fbe8e5;
+      --shadow: 0 12px 30px rgba(29, 42, 36, .08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font: 14px/1.45 Georgia, "Times New Roman", serif; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .shell { min-height: 100vh; display: grid; grid-template-columns: 238px 1fr; }
+    aside { background: var(--forest-dark); color: #e9f5ee; padding: 26px 18px; }
+    .brand { display: flex; gap: 11px; align-items: center; margin: 0 10px 42px; }
+    .brand-mark { width: 35px; height: 35px; display: grid; place-items: center; background: #bbdfc8; color: var(--forest-dark); border-radius: 50%; font-size: 21px; }
+    .brand strong { display: block; font-size: 15px; letter-spacing: .02em; }
+    .brand small { color: #aec9ba; font: 11px/1.2 Arial, sans-serif; }
+    nav button { width: 100%; border: 0; color: #c7ddd0; background: transparent; text-align: left; padding: 12px 13px; margin: 2px 0; border-radius: 7px; }
+    nav button:hover, nav button.active { background: #286b51; color: #fff; }
+    .nav-icon { display: inline-block; width: 25px; color: #a6d0b7; }
+    .aside-note { margin: 48px 10px 0; padding-top: 18px; border-top: 1px solid #386b55; color: #b2cdbd; font: 11px/1.5 Arial, sans-serif; }
+    main { min-width: 0; padding: 30px clamp(20px, 4vw, 56px) 52px; }
+    .topbar { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; margin-bottom: 24px; }
+    .eyebrow { color: var(--forest); font: 11px Arial, sans-serif; font-weight: bold; letter-spacing: .13em; text-transform: uppercase; }
+    h1 { margin: 5px 0 5px; font-size: clamp(25px, 3vw, 35px); line-height: 1.1; font-weight: normal; }
+    h2 { margin: 0; font-size: 20px; font-weight: normal; }
+    h3 { margin: 0; font-size: 15px; }
+    .subtitle { color: var(--muted); margin: 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
+    .btn { border: 1px solid var(--line); border-radius: 6px; background: var(--white); color: var(--ink); padding: 9px 13px; }
+    .btn.primary { background: var(--forest); color: white; border-color: var(--forest); }
+    .btn:hover { filter: brightness(.97); }
+    .view { display: none; animation: rise .25s ease both; }
+    .view.active { display: block; }
+    @keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    .filters, .panel, .state { background: var(--white); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 15px; margin-bottom: 18px; }
+    label { display: grid; gap: 5px; color: var(--muted); font: 11px Arial, sans-serif; font-weight: bold; letter-spacing: .02em; }
+    select, input { min-width: 135px; border: 1px solid #cbd8cf; border-radius: 5px; background: white; color: var(--ink); padding: 9px; }
+    .filters .btn { align-self: end; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+    .kpi { background: var(--white); border: 1px solid var(--line); border-left: 4px solid var(--forest); border-radius: 7px; padding: 17px; box-shadow: var(--shadow); }
+    .kpi.warn { border-left-color: var(--amber); }
+    .kpi-label { color: var(--muted); font: 11px Arial, sans-serif; text-transform: uppercase; letter-spacing: .06em; }
+    .kpi-value { display: block; margin: 8px 0 4px; font-size: 28px; }
+    .delta { color: var(--forest); font: 12px Arial, sans-serif; }
+    .delta.warn { color: var(--amber); }
+    .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 18px; margin-bottom: 18px; }
+    .panel { padding: 19px; }
+    .panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 16px; }
+    .annotation { color: var(--muted); font-size: 12px; margin: 3px 0 0; }
+    .chart { height: 190px; position: relative; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); padding: 18px 13px 0; background: repeating-linear-gradient(to bottom, transparent 0, transparent 46px, #edf2ee 47px); }
+    .chart svg { width: 100%; height: 145px; overflow: visible; }
+    .legend { display: flex; gap: 16px; color: var(--muted); font: 11px Arial, sans-serif; margin-top: 9px; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--forest); margin-right: 5px; }
+    .dot.amber { background: var(--amber); }
+    .bars { height: 190px; display: flex; align-items: end; gap: 13px; padding: 12px 6px 0; border-bottom: 1px solid var(--line); }
+    .bar-wrap { flex: 1; display: grid; gap: 6px; justify-items: center; color: var(--muted); font: 10px Arial, sans-serif; }
+    .bar { width: 100%; max-width: 40px; min-height: 8px; background: var(--forest); border-radius: 4px 4px 0 0; }
+    .bar.low { background: var(--amber); }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th { text-align: left; color: var(--muted); font: 10px Arial, sans-serif; text-transform: uppercase; letter-spacing: .05em; }
+    th, td { padding: 12px 8px; border-bottom: 1px solid #edf1ee; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background: #f3f8f4; }
+    .status { display: inline-block; padding: 4px 7px; border-radius: 4px; font: 10px Arial, sans-serif; font-weight: bold; }
+    .status.good { background: var(--mint); color: var(--forest-dark); }
+    .status.watch { background: var(--amber-bg); color: var(--amber); }
+    .flow-note { color: var(--muted); border-left: 3px solid var(--amber); padding: 8px 12px; margin: 0 0 18px; background: #fffaf0; font-size: 13px; }
+    .detail-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 18px; }
+    .metric-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .metric-list div { background: #f4f8f4; padding: 13px; border-radius: 6px; }
+    .metric-list b { display: block; font-size: 22px; margin-top: 3px; }
+    .upload { border: 1px dashed #9ab6a4; background: #f3f8f4; padding: 24px; text-align: center; border-radius: 7px; margin-top: 16px; }
+    .upload input { display: none; }
+    .message { display: none; margin-top: 12px; padding: 10px; border-radius: 5px; font: 12px Arial, sans-serif; }
+    .message.success { display: block; background: var(--mint); color: var(--forest-dark); }
+    .state { max-width: 700px; margin: 22px auto; padding: 38px; text-align: center; }
+    .state .symbol { font-size: 35px; color: var(--amber); }
+    .state p { color: var(--muted); }
+    .error { border-color: #ebc4bf; }
+    footer { color: var(--muted); font: 11px Arial, sans-serif; margin-top: 25px; }
+    @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } aside { padding: 14px; } .brand { margin: 0 0 14px; } nav { display: flex; gap: 4px; overflow-x: auto; } nav button { white-space: nowrap; } .aside-note { display: none; } .kpis { grid-template-columns: repeat(2, 1fr); } .grid, .detail-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 560px) { main { padding: 22px 14px; } .topbar { display: block; } .actions { justify-content: flex-start; margin-top: 16px; } .kpis { grid-template-columns: 1fr 1fr; gap: 8px; } .kpi { padding: 12px; } .kpi-value { font-size: 22px; } .panel { padding: 14px; overflow-x: auto; } .filters label, .filters select { width: 100%; } .filters select { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand"><div class="brand-mark">+</div><div><strong>TreeTrace</strong><small>survival tracking system</small></div></div>
+      <nav aria-label="Primary navigation">
+        <button class="active" data-view="dashboard"><span class="nav-icon">01</span>Dashboard</button>
+        <button data-view="sites"><span class="nav-icon">02</span>Sites &amp; plots</button>
+        <button data-view="observations"><span class="nav-icon">03</span>Observations</button>
+        <button data-view="upload"><span class="nav-icon">04</span>Add observation</button>
+      </nav>
+      <div class="aside-note">WIREFRAME NOTE<br>Labels describe intended behavior. This prototype demonstrates the field coordinator's daily decision path.</div>
+    </aside>
+    <main>
+      <section id="dashboard" class="view active">
+        <header class="topbar"><div><div class="eyebrow">Monitor / all plantations</div><h1>Good morning, Asha.</h1><p class="subtitle">A two-minute health check for the 2026 planting season.</p></div><div class="actions"><button class="btn" id="refresh">Refresh data</button><button class="btn primary" data-view="upload">+ Add observation</button></div></header>
+        <div class="filters"><label>Reporting period<select><option>Last 30 days</option><option>Last 7 days</option><option>Planting season</option></select></label><label>Region<select><option>All regions</option><option>North Ridge</option><option>River Belt</option></select></label><label>Site<select><option>All sites</option><option>North Ridge A</option><option>River Belt B</option></select></label><button class="btn" id="clearFilters">Clear filters</button><span class="annotation">Filters apply automatically</span></div>
+        <div class="kpis"><div class="kpi"><span class="kpi-label">Overall survival</span><strong class="kpi-value">82.4%</strong><span class="delta">+3.1% vs last period</span></div><div class="kpi"><span class="kpi-label">Trees surviving</span><strong class="kpi-value">18,640</strong><span class="delta">of 22,620 planted</span></div><div class="kpi warn"><span class="kpi-label">Sites needing attention</span><strong class="kpi-value">3</strong><span class="delta warn">Review this week</span></div><div class="kpi"><span class="kpi-label">Last field update</span><strong class="kpi-value">2h ago</strong><span class="delta">12 observations received</span></div></div>
+        <div class="grid"><article class="panel"><div class="panel-head"><div><h2>Survival trend</h2><p class="annotation">Does survival improve after the latest field visits?</p></div><span class="status good">Target 80%</span></div><div class="chart"><svg viewBox="0 0 600 150" role="img" aria-label="Survival trend from 74 to 82 percent"><polyline points="0,125 80,115 160,118 240,92 320,96 400,63 480,56 590,35" fill="none" stroke="#176b4d" stroke-width="4"/><circle cx="590" cy="35" r="6" fill="#176b4d"/><line x1="0" y1="57" x2="600" y2="57" stroke="#a96818" stroke-dasharray="6 6"/></svg></div><div class="legend"><span><i class="dot"></i>Observed survival</span><span><i class="dot amber"></i>Target threshold</span></div></article><article class="panel"><div class="panel-head"><div><h2>Survival by site</h2><p class="annotation">Which sites need a closer look?</p></div></div><div class="bars"><div class="bar-wrap"><div class="bar" style="height: 86%"></div>NR-A<br>86%</div><div class="bar-wrap"><div class="bar" style="height: 78%"></div>RB-B<br>78%</div><div class="bar-wrap"><div class="bar low" style="height: 61%"></div>NR-C<br>61%</div><div class="bar-wrap"><div class="bar" style="height: 89%"></div>WL-A<br>89%</div><div class="bar-wrap"><div class="bar low" style="height: 68%"></div>RB-D<br>68%</div></div><p class="annotation" style="margin-top:10px">Amber bars are below the 75% review threshold.</p></article></div>
+        <article class="panel"><div class="panel-head"><div><h2>Sites needing attention</h2><p class="annotation">Start here to investigate and decide whether to replant.</p></div><button class="btn" data-view="sites">View all sites</button></div><table><thead><tr><th>Site</th><th>Region</th><th>Survival</th><th>Last visit</th><th>Action</th></tr></thead><tbody><tr class="clickable" data-view="sites"><td><strong>North Ridge C</strong></td><td>North Ridge</td><td><span class="status watch">61%</span></td><td>Today, 09:20</td><td>Investigate &rarr;</td></tr><tr class="clickable" data-view="sites"><td><strong>River Belt D</strong></td><td>River Belt</td><td><span class="status watch">68%</span></td><td>Yesterday</td><td>Investigate &rarr;</td></tr><tr><td><strong>River Belt B</strong></td><td>River Belt</td><td><span class="status watch">78%</span></td><td>3 days ago</td><td>Monitor</td></tr></tbody></table></article>
+      </section>
+      <section id="sites" class="view"><header class="topbar"><div><div class="eyebrow">Investigate / North Ridge C</div><h1>North Ridge C</h1><p class="subtitle">Review plot performance before making a replanting decision.</p></div><div class="actions"><button class="btn" data-view="dashboard">&larr; Dashboard</button><button class="btn primary" data-view="upload">+ Add observation</button></div></header><p class="flow-note"><strong>Decision path:</strong> Dashboard alert &rarr; site detail &rarr; compare plots &rarr; review field notes &rarr; schedule replanting.</p><div class="detail-grid"><article class="panel"><div class="panel-head"><div><h2>Site health</h2><p class="annotation">Latest verified values</p></div><span class="status watch">Needs attention</span></div><div class="metric-list"><div>Planted<b>4,820</b></div><div>Surviving<b>2,940</b></div><div>Survival rate<b>61%</b></div><div>Last visit<b>Today</b></div></div><div class="upload"><strong>Recommended next action</strong><p class="annotation">Verify water access on plots C2 and C3, then decide replant quantity.</p><button class="btn primary" data-view="upload">Record field visit</button></div></article><article class="panel"><div class="panel-head"><div><h2>Plot comparison</h2><p class="annotation">Click a row to open plot records in the future build.</p></div></div><table><thead><tr><th>Plot</th><th>Survival</th><th>Risk signal</th><th>Last note</th></tr></thead><tbody><tr><td><strong>C1</strong></td><td>79%</td><td><span class="status good">On track</span></td><td>Healthy growth</td></tr><tr><td><strong>C2</strong></td><td><span class="status watch">54%</span></td><td><span class="status watch">Water stress</span></td><td>Dry soil observed</td></tr><tr><td><strong>C3</strong></td><td><span class="status watch">49%</span></td><td><span class="status watch">Animal damage</span></td><td>Fence repair needed</td></tr></tbody></table></article></div><article class="panel" style="margin-top:18px"><div class="panel-head"><div><h2>Recent observations</h2><p class="annotation">Newest field evidence appears first.</p></div><button class="btn" data-view="observations">Open observation log</button></div><table><thead><tr><th>Date</th><th>Observer</th><th>Plots</th><th>Summary</th></tr></thead><tbody><tr><td>Today, 09:20</td><td>R. Kumar</td><td>C2, C3</td><td>Water stress and animal damage noted</td></tr><tr><td>12 Aug 2026</td><td>A. Singh</td><td>C1-C3</td><td>Routine count completed</td></tr></tbody></table></article></section>
+      <section id="observations" class="view"><header class="topbar"><div><div class="eyebrow">Evidence / field records</div><h1>Observation log</h1><p class="subtitle">Every survival number should be traceable to a field visit.</p></div><div class="actions"><button class="btn" data-view="sites">Back to site</button><button class="btn primary" data-view="upload">+ Add observation</button></div></header><article class="panel"><div class="panel-head"><div><h2>Recent field observations</h2><p class="annotation">Sortable by date, site, observer, or risk signal.</p></div><button class="btn" id="emptyDemo">Show empty state</button></div><table id="observationTable"><thead><tr><th>Date</th><th>Site</th><th>Observer</th><th>Survival count</th><th>Signals</th></tr></thead><tbody><tr><td>Today, 09:20</td><td>North Ridge C</td><td>R. Kumar</td><td>2,940 / 4,820</td><td><span class="status watch">Water stress</span></td></tr><tr><td>Yesterday</td><td>River Belt D</td><td>M. Joseph</td><td>1,780 / 2,620</td><td><span class="status watch">Animal damage</span></td></tr><tr><td>12 Aug 2026</td><td>North Ridge A</td><td>A. Singh</td><td>4,130 / 4,800</td><td><span class="status good">No issue</span></td></tr></tbody></table></article></section>
+      <section id="upload" class="view"><header class="topbar"><div><div class="eyebrow">Capture / field evidence</div><h1>Add an observation</h1><p class="subtitle">Keep the next decision grounded in current field conditions.</p></div><div class="actions"><button class="btn" data-view="dashboard">Cancel</button></div></header><div class="detail-grid"><article class="panel"><div class="panel-head"><div><h2>Upload observation file</h2><p class="annotation">Accepted format: CSV. Required columns: site, plot, planted, surviving, observed_at.</p></div></div><div class="upload"><p><strong>Drop a CSV here</strong></p><p class="annotation">or choose a file from your device</p><label class="btn primary" for="fileInput">Choose CSV<input id="fileInput" type="file" accept=".csv"></label><div id="fileMessage" class="message"></div></div><p class="annotation" style="margin-top:14px">Validation: show row-level errors before import. Do not partially save an invalid file.</p></article><article class="panel"><div class="panel-head"><div><h2>Manual entry</h2><p class="annotation">Use this for one field visit or a correction.</p></div></div><label>Site<select><option>North Ridge C</option><option>River Belt D</option></select></label><br><label>Plot<input placeholder="e.g. C2"></label><br><label>Surviving trees<input type="number" placeholder="e.g. 2940"></label><br><label>Field note<input placeholder="What did you observe?"></label><br><button class="btn primary" id="saveObservation">Save observation</button><div id="saveMessage" class="message"></div></article></div></section>
+      <section id="empty" class="view"><div class="state"><div class="symbol">○</div><h2>No sites match these filters</h2><p>Try widening the reporting period or clearing the region and site filters. Your data is still safe.</p><button class="btn primary" data-view="dashboard">Clear filters and return</button></div></section>
+      <section id="error" class="view"><div class="state error"><div class="symbol">!</div><h2>We could not refresh the field data</h2><p>The latest data connection failed. Existing values are from the last successful refresh at 08:40.</p><button class="btn primary" data-view="dashboard">Try again</button></div></section>
+      <footer>TreeTrace Mock UX · Product planning artifact · Primary user: field coordinator · Core task: identify survival risk and act on evidence</footer>
+    </main>
+  </div>
+  <script>
+    const views = document.querySelectorAll('.view');
+    const nav = document.querySelectorAll('[data-view]');
+    function showView(name) {
+      views.forEach(view => view.classList.toggle('active', view.id === name));
+      document.querySelectorAll('nav button').forEach(button => button.classList.toggle('active', button.dataset.view === name));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    nav.forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
+    document.getElementById('clearFilters').addEventListener('click', () => alert('Filters cleared. Dashboard reset to all plantations.'));
+    document.getElementById('refresh').addEventListener('click', () => showView('error'));
+    document.getElementById('fileInput').addEventListener('change', event => {
+      const message = document.getElementById('fileMessage');
+      if (event.target.files.length) { message.textContent = event.target.files[0].name + ' ready for validation.'; message.className = 'message success'; }
+    });
+    document.getElementById('saveObservation').addEventListener('click', () => {
+      const message = document.getElementById('saveMessage'); message.textContent = 'Observation saved. Dashboard metrics will refresh after validation.'; message.className = 'message success';
+    });
+    document.getElementById('emptyDemo').addEventListener('click', () => showView('empty'));
+  </script>
+</body>
+</html>
