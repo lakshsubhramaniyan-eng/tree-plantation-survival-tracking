@@ -2,7 +2,7 @@ import 'dotenv/config'
 import express, { type NextFunction, type Request, type Response } from 'express'
 import mongoose from 'mongoose'
 import { connectDatabase } from './db.js'
-import { ObservationModel, SiteModel } from './models/index.js'
+import { ObservationModel, PlotModel, SiteModel } from './models/index.js'
 
 const app = express()
 const port = Number(process.env.PORT ?? 3000)
@@ -29,6 +29,33 @@ app.get('/api/sites', async (_request, response, next) => {
   try {
     const sites = await SiteModel.find({ status: 'active' }).sort({ name: 1 }).lean()
     response.json(sites)
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/api/sites/:siteId', async (request, response, next) => {
+  try {
+    if (!mongoose.isValidObjectId(request.params.siteId)) {
+      response.status(400).json({ error: 'siteId must be a valid MongoDB ObjectId' })
+      return
+    }
+
+    const site = await SiteModel.findOne({ _id: request.params.siteId, status: 'active' }).lean()
+    if (!site) {
+      response.status(404).json({ error: 'Active site not found' })
+      return
+    }
+
+    const [plots, observations] = await Promise.all([
+      PlotModel.find({ siteId: site._id }).sort({ name: 1 }).lean(),
+      ObservationModel.find({ siteId: site._id })
+        .populate('plotId', 'name plantedTrees survivingTrees')
+        .sort({ observedAt: -1 })
+        .lean(),
+    ])
+
+    response.json({ site, plots, observations })
   } catch (error) {
     next(error)
   }
@@ -126,8 +153,22 @@ app.post('/api/sites/:siteId/observations', async (request, response, next) => {
       return
     }
 
+    const plotId = getField<mongoose.Types.ObjectId | string>(body, 'plotId')
+    if (plotId !== undefined) {
+      if (!mongoose.isValidObjectId(plotId)) {
+        response.status(400).json({ error: 'plotId must be a valid MongoDB ObjectId' })
+        return
+      }
+
+      const plotExists = await PlotModel.exists({ _id: plotId, siteId: request.params.siteId })
+      if (!plotExists) {
+        response.status(404).json({ error: 'Plot not found for this site' })
+        return
+      }
+    }
+
     const observation = await ObservationModel.create({
-      plotId: getField<mongoose.Types.ObjectId | string>(body, 'plotId'),
+      plotId,
       observedAt: getField<Date | string>(body, 'observedAt'),
       observedBy: getField<string>(body, 'observedBy'),
       survivingTrees: getField<number>(body, 'survivingTrees'),
@@ -154,10 +195,24 @@ app.put('/api/sites/:siteId/observations/:observationId', async (request, respon
       return
     }
 
+    const plotId = getField<mongoose.Types.ObjectId | string>(body, 'plotId')
+    if (plotId !== undefined) {
+      if (!mongoose.isValidObjectId(plotId)) {
+        response.status(400).json({ error: 'plotId must be a valid MongoDB ObjectId' })
+        return
+      }
+
+      const plotExists = await PlotModel.exists({ _id: plotId, siteId: request.params.siteId })
+      if (!plotExists) {
+        response.status(404).json({ error: 'Plot not found for this site' })
+        return
+      }
+    }
+
     const observation = await ObservationModel.findOneAndUpdate(
       { _id: request.params.observationId, siteId: request.params.siteId },
       {
-        plotId: getField<mongoose.Types.ObjectId | string>(body, 'plotId'),
+        plotId,
         observedAt: getField<Date | string>(body, 'observedAt'),
         observedBy: getField<string>(body, 'observedBy'),
         survivingTrees: getField<number>(body, 'survivingTrees'),

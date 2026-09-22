@@ -33,6 +33,7 @@ npm start
 Available database-backed routes:
 
 - `GET /api/sites` reads active plantation sites.
+- `GET /api/sites/:siteId` returns an active site with its related plots and observations.
 - `POST /api/sites` creates a plantation site from a JSON body.
 - `PUT /api/sites/:siteId` updates an active plantation site.
 - `GET /api/sites/:siteId/observations` reads observations for a site.
@@ -45,6 +46,8 @@ POST request bodies are JSON objects. A site accepts `name`, `region`, `plantedT
 `observedBy`, `survivingTrees`, `notes`, and `source`; its `siteId` comes from the URL.
 Validation failures return `400`, missing active sites return `404`, and duplicate site
 names within a region return `409`.
+Observation writes validate that any supplied `plotId` belongs to the requested site;
+invalid or unrelated plots return `400` or `404`.
 
 ### Video walkthrough outline
 
