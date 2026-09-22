@@ -1,9 +1,9 @@
-import { model, models, Schema, type InferSchemaType } from 'mongoose'
+import mongoose, { type InferSchemaType } from 'mongoose'
 
-const plotSchema = new Schema(
+const plotSchema = new mongoose.Schema(
   {
     siteId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Site',
       required: true,
       index: true,
@@ -36,4 +36,4 @@ plotSchema.path('survivingTrees').validate(function (survivingTrees: number) {
 plotSchema.index({ siteId: 1, name: 1 }, { unique: true })
 
 export type Plot = InferSchemaType<typeof plotSchema>
-export const PlotModel = models.Plot || model('Plot', plotSchema)
+export const PlotModel = mongoose.models.Plot || mongoose.model('Plot', plotSchema)

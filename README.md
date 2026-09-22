@@ -22,6 +22,22 @@ This low-fidelity product prototype shows how a field coordinator monitors plant
 
 The design is intentionally a functional wireframe rather than a finished visual design. Labels describe behavior and data requirements for implementation.
 
+## Database API
+
+The API server uses MongoDB through Mongoose. Copy `.env.example` to `.env` and set `MONGODB_URI` before starting it:
+
+```bash
+npm start
+```
+
+Available database-backed routes:
+
+- `GET /api/sites` reads active plantation sites.
+- `POST /api/sites` creates a plantation site from a JSON body.
+- `GET /api/sites/:siteId/observations` reads observations for a site.
+- `POST /api/sites/:siteId/observations` creates an observation after verifying the site exists.
+- `GET /health` reports API and database connection status.
+
 ### Video walkthrough outline
 
 Use the linked wireframe for a 3-5 minute recording:

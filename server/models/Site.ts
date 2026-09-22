@@ -1,6 +1,6 @@
-import { model, models, Schema, type InferSchemaType } from 'mongoose'
+import mongoose, { type InferSchemaType } from 'mongoose'
 
-const siteSchema = new Schema(
+const siteSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -39,4 +39,4 @@ siteSchema.index({ region: 1, status: 1 })
 siteSchema.index({ name: 1, region: 1 }, { unique: true })
 
 export type Site = InferSchemaType<typeof siteSchema>
-export const SiteModel = models.Site || model('Site', siteSchema)
+export const SiteModel = mongoose.models.Site || mongoose.model('Site', siteSchema)
