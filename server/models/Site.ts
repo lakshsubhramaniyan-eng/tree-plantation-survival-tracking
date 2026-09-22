@@ -39,4 +39,4 @@ siteSchema.index({ region: 1, status: 1 })
 siteSchema.index({ name: 1, region: 1 }, { unique: true })
 
 export type Site = InferSchemaType<typeof siteSchema>
-export const SiteModel = mongoose.models.Site || mongoose.model('Site', siteSchema)
+export const SiteModel = (mongoose.models.Site as mongoose.Model<Site> | undefined) || mongoose.model<Site>('Site', siteSchema)

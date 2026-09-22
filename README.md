@@ -33,6 +33,7 @@ npm start
 Available database-backed routes:
 
 - `GET /api/sites` reads active plantation sites.
+- `GET /api/sites/:siteId` reads one active plantation site.
 - `POST /api/sites` creates a plantation site from a JSON body.
 - `GET /api/sites/:siteId/observations` reads observations for a site.
 - `POST /api/sites/:siteId/observations` creates an observation after verifying the site exists.
