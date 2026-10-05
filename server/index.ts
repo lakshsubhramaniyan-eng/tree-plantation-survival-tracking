@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express, { type NextFunction, type Request, type Response } from 'express'
 import mongoose from 'mongoose'
+import { authenticateToken, authRouter } from './auth.js'
 import { connectDatabase } from './db.js'
 import { ObservationModel, PlotModel, SiteModel } from './models/index.js'
 
@@ -24,6 +25,9 @@ function getField<T>(body: Record<string, unknown>, field: string): T | undefine
 app.get('/health', (_request, response) => {
   response.json({ status: 'ok', database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' })
 })
+
+app.use('/api/auth', authRouter)
+app.use('/api', authenticateToken)
 
 app.get('/api/sites', async (_request, response, next) => {
   try {
