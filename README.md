@@ -24,13 +24,21 @@ The design is intentionally a functional wireframe rather than a finished visual
 
 ## Database API
 
-The API server uses MongoDB through Mongoose. Copy `.env.example` to `.env` and set `MONGODB_URI` before starting it:
+The API server uses MongoDB through Mongoose. Copy `.env.example` to `.env`, set `MONGODB_URI`, and replace `JWT_SECRET` with a private random value of at least 32 bytes before starting it:
 
 ```bash
 npm start
 ```
 
-Available database-backed routes:
+Authentication routes:
+
+- `POST /api/auth/register` accepts `{ "username": "...", "password": "..." }`, creates an account with a bcrypt-hashed password, and returns a signed token.
+- `POST /api/auth/login` accepts the same credentials and returns a signed token.
+- `GET /api/auth/me` returns the authenticated username when sent an `Authorization: Bearer <token>` header.
+
+Passwords must contain at least 8 characters; usernames must be 3-24 letters, numbers, or underscores. All `/api` site and observation routes require the bearer token returned by registration or login. Tokens expire after 7 days.
+
+Available database-backed routes (all require authentication):
 
 - `GET /api/sites` reads active plantation sites.
 - `GET /api/sites/:siteId` returns an active site with its related plots and observations.

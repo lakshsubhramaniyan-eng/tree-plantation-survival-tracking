@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { AuthScreen } from './components/AuthScreen'
 import { FilterBar } from './components/FilterBar'
 import { MetricCard } from './components/MetricCard'
 import { SiteTable, type Site } from './components/SiteTable'
@@ -6,6 +7,9 @@ import { TrendChart } from './components/TrendChart'
 import './App.css'
 
 function App() {
+  const [token, setToken] = useState(() => localStorage.getItem('treebase_token'))
+  const [username, setUsername] = useState('')
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
   const [region, setRegion] = useState('All regions')
   const [period, setPeriod] = useState('Last 30 days')
   const [sites, setSites] = useState<Site[]>([
@@ -13,6 +17,44 @@ function App() {
     { id: 2, name: 'Kijani Ridge', region: 'Western slopes', trees: 9800, survival: 78, status: 'Needs attention' },
     { id: 3, name: 'Mtoni Watershed', region: 'Coastal belt', trees: 15750, survival: 84, status: 'On track' },
   ])
+
+  useEffect(() => {
+    if (!token) {
+      setIsCheckingSession(false)
+      return
+    }
+
+    let isCurrent = true
+    fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Session expired')
+        return response.json() as Promise<{ user: { username: string } }>
+      })
+      .then((result) => {
+        if (isCurrent) setUsername(result.user.username)
+      })
+      .catch(() => {
+        localStorage.removeItem('treebase_token')
+        if (isCurrent) setToken(null)
+      })
+      .finally(() => {
+        if (isCurrent) setIsCheckingSession(false)
+      })
+
+    return () => { isCurrent = false }
+  }, [token])
+
+  const handleAuthenticated = (newToken: string, authenticatedUsername: string) => {
+    localStorage.setItem('treebase_token', newToken)
+    setToken(newToken)
+    setUsername(authenticatedUsername)
+  }
+
+  const handleSignOut = () => {
+    localStorage.removeItem('treebase_token')
+    setToken(null)
+    setUsername('')
+  }
 
   const updateSite = (updatedSite: Site) => {
     setSites((currentSites) => currentSites.map((site) => site.id === updatedSite.id ? updatedSite : site))
@@ -22,14 +64,22 @@ function App() {
     setSites((currentSites) => currentSites.filter((site) => site.id !== siteId))
   }
 
+  if (isCheckingSession) {
+    return <main className="auth-loading" aria-live="polite">Checking your session…</main>
+  }
+
+  if (!token) {
+    return <AuthScreen onAuthenticated={handleAuthenticated} />
+  }
+
   return (
     <main className="dashboard-shell">
       <header className="topbar">
         <div className="brand-mark"><span>TS</span><div><strong>Treebase</strong><small>Survival tracking</small></div></div>
-        <div className="user-menu"><span className="avatar">LP</span><span>Field coordinator</span><button aria-label="Open account menu">⌄</button></div>
+        <div className="user-menu"><span className="avatar">{username.slice(0, 2).toUpperCase()}</span><span>{username}</span><button type="button" onClick={handleSignOut}>Sign out</button></div>
       </header>
       <div className="dashboard-content">
-        <div className="page-heading"><div><p className="eyebrow">Wednesday, 23 September 2026</p><h1>Good morning, Lakshmi</h1><p>Here is how your plantations are performing today.</p></div><button className="button button--primary" type="button">+ Add observation</button></div>
+        <div className="page-heading"><div><p className="eyebrow">Wednesday, 23 September 2026</p><h1>Good morning, {username}</h1><p>Here is how your plantations are performing today.</p></div><button className="button button--primary" type="button">+ Add observation</button></div>
         <FilterBar region={region} period={period} onRegionChange={setRegion} onPeriodChange={setPeriod} />
         <section className="metrics-grid" aria-label="Portfolio summary">
           <MetricCard label="Overall survival" value="82.4%" detail="Up 3.8% from last period" tone="positive" />
