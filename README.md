@@ -47,6 +47,7 @@ Available database-backed routes (all require authentication):
 - `PUT /api/sites/:siteId` updates an active plantation site.
 - `GET /api/sites/:siteId/observations` reads observations for a site.
 - `POST /api/sites/:siteId/observations` creates an observation after verifying the site exists.
+- `POST /api/sites/:siteId/observations/upload` imports CSV observations for an active site using multipart form field `file`.
 - `PUT /api/sites/:siteId/observations/:observationId` updates an observation belonging to the site.
 - `GET /health` reports API and database connection status.
 
@@ -58,6 +59,10 @@ names within a region return `409`.
 Observation writes validate that any supplied `plotId` belongs to the requested site;
 invalid or unrelated plots return `400` or `404`.
 
+### CSV observation uploads
+
+The upload endpoint requires the same bearer JWT as other `/api` routes. Select an active site in the dashboard, choose a `.csv` file, and submit it. Files are limited to 2 MB and 500 rows. The required CSV headers are `observedBy` and `survivingTrees`; `observedAt`, `plotId`, and `notes` are optional. Dates must be parseable, tree counts must be non-negative whole numbers, and supplied plot IDs must belong to the selected site. The endpoint validates all rows before inserting observations and marks each imported record with `source: "csv"`.
+
 ### Video walkthrough outline
 
 Use the linked wireframe for a 3-5 minute recording:
@@ -66,7 +71,7 @@ Use the linked wireframe for a 3-5 minute recording:
 2. Show the dashboard scan and explain the KPI hierarchy.
 3. Apply region and period filters, then drill into the highlighted site.
 4. Explain the plot comparison and observation history.
-5. Open Add observation, demonstrate the upload/manual entry path, and point out validation.
+5. Open Upload observations, download the CSV template, choose an active site, and explain the row and file validation.
 6. Show the empty and error recovery states and close with the end-to-end decision flow.
 
 ### Google OAuth setup
