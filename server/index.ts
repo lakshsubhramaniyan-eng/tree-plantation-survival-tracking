@@ -1,12 +1,34 @@
 import 'dotenv/config'
 import express, { type NextFunction, type Request, type Response } from 'express'
 import mongoose from 'mongoose'
+import { parse } from 'csv-parse/sync'
+import multer from 'multer'
 import { authenticateToken, authRouter } from './auth.js'
 import { connectDatabase } from './db.js'
 import { ObservationModel, PlotModel, SiteModel } from './models/index.js'
 
 const app = express()
 const port = Number(process.env.PORT ?? 3000)
+const maxUploadBytes = 2 * 1024 * 1024
+const maxCsvRows = 500
+const csvUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: maxUploadBytes, files: 1, fields: 0 },
+  fileFilter: (_request, file, callback) => {
+    if (!file.originalname.toLowerCase().endsWith('.csv')) {
+      callback(new Error('Upload a .csv file'))
+      return
+    }
+    callback(null, true)
+  },
+})
+
+class CsvUploadError extends Error {
+  constructor(message: string, readonly statusCode = 400) {
+    super(message)
+    this.name = 'CsvUploadError'
+  }
+}
 
 app.use(express.json())
 
@@ -138,6 +160,45 @@ app.get('/api/sites/:siteId/observations', async (request, response, next) => {
   }
 })
 
+app.post('/api/sites/:siteId/observations/upload', (request, response, next) => {
+  if (!mongoose.isValidObjectId(request.params.siteId)) {
+    response.status(400).json({ error: 'siteId must be a valid MongoDB ObjectId' })
+    return
+  }
+
+  csvUpload.single('file')(request, response, (uploadError: unknown) => {
+    if (uploadError) {
+      if (uploadError instanceof multer.MulterError) {
+        const status = uploadError.code === 'LIMIT_FILE_SIZE' ? 413 : 400
+        response.status(status).json({
+          error: uploadError.code === 'LIMIT_FILE_SIZE'
+            ? 'CSV files must be 2 MB or smaller'
+            : 'Upload exactly one CSV file using the file field',
+        })
+        return
+      }
+
+      if (uploadError instanceof Error) {
+        response.status(400).json({ error: uploadError.message })
+        return
+      }
+
+      next(uploadError)
+      return
+    }
+
+    void importObservationCsv(request)
+      .then((imported) => response.status(201).json({ imported }))
+      .catch((error: unknown) => {
+        if (error instanceof CsvUploadError) {
+          response.status(error.statusCode).json({ error: error.message })
+          return
+        }
+        next(error)
+      })
+  })
+})
+
 app.post('/api/sites/:siteId/observations', async (request, response, next) => {
   try {
     if (!mongoose.isValidObjectId(request.params.siteId)) {
@@ -185,6 +246,113 @@ app.post('/api/sites/:siteId/observations', async (request, response, next) => {
     next(error)
   }
 })
+
+async function importObservationCsv(request: Request): Promise<number> {
+  const file = request.file
+  if (!file) {
+    throw new CsvUploadError('Select a CSV file to upload')
+  }
+
+  const siteId = request.params.siteId
+  const site = await SiteModel.findOne({ _id: siteId, status: 'active' }).select('_id').lean()
+  if (!site) {
+    throw new CsvUploadError('Active site not found', 404)
+  }
+
+  let records: Record<string, string>[]
+  try {
+    records = parse(file.buffer, {
+      bom: true,
+      columns: (headers: string[]) => {
+        const normalizedHeaders = headers.map((header) => header.trim())
+        if (normalizedHeaders.some((header) => !header) || new Set(normalizedHeaders).size !== normalizedHeaders.length) {
+          throw new Error('CSV headers must be non-empty and unique')
+        }
+        return normalizedHeaders
+      },
+      skip_empty_lines: true,
+      trim: true,
+      max_record_size: 16 * 1024,
+    }) as Record<string, string>[]
+  } catch {
+    throw new CsvUploadError('CSV format is invalid. Check its quoting and column layout.')
+  }
+
+  if (records.length === 0) {
+    throw new CsvUploadError('The CSV has no observation rows')
+  }
+  if (records.length > maxCsvRows) {
+    throw new CsvUploadError(`A single upload can contain at most ${maxCsvRows} observation rows`)
+  }
+
+  const allowedColumns = new Set(['observedBy', 'survivingTrees', 'observedAt', 'plotId', 'notes'])
+  const columns = Object.keys(records[0] ?? {})
+  const unknownColumns = columns.filter((column) => !allowedColumns.has(column))
+  if (unknownColumns.length > 0) {
+    throw new CsvUploadError(`Unsupported CSV column: ${unknownColumns.join(', ')}`)
+  }
+  if (!columns.includes('observedBy') || !columns.includes('survivingTrees')) {
+    throw new CsvUploadError('CSV must include observedBy and survivingTrees columns')
+  }
+
+  const plotIds = new Set<string>()
+  const observations = records.map((record, index) => {
+    const rowNumber = index + 2
+    const observedBy = record.observedBy?.trim()
+    if (!observedBy || observedBy.length > 120) {
+      throw new CsvUploadError(`Row ${rowNumber}: observedBy is required and must be at most 120 characters`)
+    }
+
+    const treeCount = record.survivingTrees?.trim()
+    const survivingTrees = Number(treeCount)
+    if (!treeCount || !/^\d+$/.test(treeCount) || !Number.isSafeInteger(survivingTrees)) {
+      throw new CsvUploadError(`Row ${rowNumber}: survivingTrees must be a non-negative whole number`)
+    }
+
+    const observedAt = record.observedAt ? new Date(record.observedAt) : new Date()
+    if (Number.isNaN(observedAt.getTime())) {
+      throw new CsvUploadError(`Row ${rowNumber}: observedAt must be a valid date`)
+    }
+
+    const notes = record.notes?.trim()
+    if (notes && notes.length > 2000) {
+      throw new CsvUploadError(`Row ${rowNumber}: notes must be at most 2000 characters`)
+    }
+
+    const plotId = record.plotId?.trim()
+    if (plotId) {
+      if (!mongoose.isValidObjectId(plotId)) {
+        throw new CsvUploadError(`Row ${rowNumber}: plotId must be a valid MongoDB ObjectId`)
+      }
+      plotIds.add(plotId)
+    }
+
+    return {
+      siteId: site._id,
+      observedBy,
+      survivingTrees,
+      observedAt,
+      ...(notes ? { notes } : {}),
+      ...(plotId ? { plotId } : {}),
+      source: 'csv' as const,
+    }
+  })
+
+  if (plotIds.size > 0) {
+    const matchingPlots = await PlotModel.find({
+      _id: { $in: [...plotIds] },
+      siteId: site._id,
+    }).distinct('_id')
+    const matchingPlotIds = new Set(matchingPlots.map((id) => id.toString()))
+    const unrelatedPlot = [...plotIds].find((id) => !matchingPlotIds.has(id))
+    if (unrelatedPlot) {
+      throw new CsvUploadError('A plotId does not belong to the selected site')
+    }
+  }
+
+  await ObservationModel.insertMany(observations, { ordered: true })
+  return observations.length
+}
 
 app.put('/api/sites/:siteId/observations/:observationId', async (request, response, next) => {
   try {

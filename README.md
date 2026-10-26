@@ -47,6 +47,7 @@ Available database-backed routes (all require authentication):
 - `PUT /api/sites/:siteId` updates an active plantation site.
 - `GET /api/sites/:siteId/observations` reads observations for a site.
 - `POST /api/sites/:siteId/observations` creates an observation after verifying the site exists.
+- `POST /api/sites/:siteId/observations/upload` imports CSV observations for an active site using multipart form field `file`.
 - `PUT /api/sites/:siteId/observations/:observationId` updates an observation belonging to the site.
 - `GET /health` reports API and database connection status.
 
@@ -57,6 +58,10 @@ Validation failures return `400`, missing active sites return `404`, and duplica
 names within a region return `409`.
 Observation writes validate that any supplied `plotId` belongs to the requested site;
 invalid or unrelated plots return `400` or `404`.
+
+### CSV observation uploads
+
+The upload endpoint requires the same bearer JWT as other `/api` routes. Select an active site in the dashboard, choose a `.csv` file, and submit it. Files are limited to 2 MB and 500 rows. The required CSV headers are `observedBy` and `survivingTrees`; `observedAt`, `plotId`, and `notes` are optional. Dates must be parseable, tree counts must be non-negative whole numbers, and supplied plot IDs must belong to the selected site. The endpoint validates all rows before inserting observations and marks each imported record with `source: "csv"`.
 
 ### Video walkthrough outline
 
