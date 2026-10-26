@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from 'react'
+import { GoogleLogin } from '@react-oauth/google'
 import './AuthScreen.css'
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 type AuthResponse = {
   token: string
@@ -16,6 +19,30 @@ export function AuthScreen({ onAuthenticated }: AuthScreenProps) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  async function signInWithGoogle(credential: string) {
+    setError('')
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+      })
+      const result = await response.json() as AuthResponse | { error: string }
+      if (!response.ok || !('token' in result)) {
+        setError('error' in result ? result.error : 'Unable to sign in with Google')
+        return
+      }
+
+      onAuthenticated(result.token, result.user.username)
+    } catch {
+      setError('Could not reach the server. Check that the API is running and try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -58,7 +85,31 @@ export function AuthScreen({ onAuthenticated }: AuthScreenProps) {
         <div className="auth-form-wrap">
           <p className="auth-eyebrow">{mode === 'login' ? 'Welcome back' : 'Create your account'}</p>
           <h2>{mode === 'login' ? 'Sign in to Treebase' : 'Join your field team'}</h2>
-          <p className="auth-subtitle">Use your username and password to continue.</p>
+          <p className="auth-subtitle">Continue with Google or use your username and password.</p>
+
+          {googleClientId ? (
+            <div className="google-login">
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  if (credentialResponse.credential) {
+                    void signInWithGoogle(credentialResponse.credential)
+                  } else {
+                    setError('Google did not return a sign-in credential. Please try again.')
+                  }
+                }}
+                onError={() => setError('Google sign-in failed. Please try again.')}
+                useOneTap={false}
+                text="continue_with"
+                width="350"
+                theme="outline"
+                shape="rectangular"
+              />
+            </div>
+          ) : (
+            <p className="google-login-unavailable" role="status">
+              Add VITE_GOOGLE_CLIENT_ID to the client environment to enable Google sign-in.
+            </p>
+          )}
 
           <div className="auth-tabs" role="tablist" aria-label="Authentication method">
             <button type="button" role="tab" aria-selected={mode === 'login'} onClick={() => { setMode('login'); setError('') }}>Sign in</button>
@@ -95,7 +146,7 @@ export function AuthScreen({ onAuthenticated }: AuthScreenProps) {
               <span aria-hidden="true">→</span>
             </button>
           </form>
-          <p className="auth-note">Your password is stored securely as a one-way hash.</p>
+          <p className="auth-note">Passwords are stored as one-way hashes. Google credentials are verified by the server.</p>
         </div>
       </section>
     </main>

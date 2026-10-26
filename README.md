@@ -24,7 +24,7 @@ The design is intentionally a functional wireframe rather than a finished visual
 
 ## Database API
 
-The API server uses MongoDB through Mongoose. Copy `.env.example` to `.env`, set `MONGODB_URI`, and replace `JWT_SECRET` with a private random value of at least 32 bytes before starting it:
+The API server uses MongoDB through Mongoose. Copy `.env.example` to `.env`, set `MONGODB_URI`, replace `JWT_SECRET` with a private random value of at least 32 bytes, and set `GOOGLE_CLIENT_ID` before starting it:
 
 ```bash
 npm start
@@ -34,9 +34,10 @@ Authentication routes:
 
 - `POST /api/auth/register` accepts `{ "username": "...", "password": "..." }`, creates an account with a bcrypt-hashed password, and returns a signed token.
 - `POST /api/auth/login` accepts the same credentials and returns a signed token.
+- `POST /api/auth/google` accepts `{ "credential": "<Google ID token>" }`, verifies the token with Google, and returns a Treebase JWT. Verified Google emails are linked to existing accounts or used to create an account on first sign-in.
 - `GET /api/auth/me` returns the authenticated username when sent an `Authorization: Bearer <token>` header.
 
-Passwords must contain at least 8 characters; usernames must be 3-24 letters, numbers, or underscores. All `/api` site and observation routes require the bearer token returned by registration or login. Tokens expire after 7 days.
+Passwords must contain at least 8 characters; usernames must be 3-24 letters, numbers, or underscores. All `/api` site and observation routes require the bearer token returned by registration, login, or Google sign-in. Tokens expire after 7 days.
 
 Available database-backed routes (all require authentication):
 
@@ -67,3 +68,13 @@ Use the linked wireframe for a 3-5 minute recording:
 4. Explain the plot comparison and observation history.
 5. Open Add observation, demonstrate the upload/manual entry path, and point out validation.
 6. Show the empty and error recovery states and close with the end-to-end decision flow.
+
+### Google OAuth setup
+
+1. Create a Google OAuth client ID for a **Web application** in Google Cloud Console.
+2. Add `http://localhost:5173` as an authorized JavaScript origin.
+3. Copy `.env.example` to `.env` and set `GOOGLE_CLIENT_ID` to the client ID. Keep `JWT_SECRET` private.
+4. Copy `client/.env.example` to `client/.env` and set `VITE_GOOGLE_CLIENT_ID` to the same client ID. This browser client ID is public; never place a client secret in a `VITE_` variable.
+5. Start the API with `npm start`, then run the client from the `client` directory with `npm run dev`.
+
+The client sends the Google ID token to the API; the API verifies it and issues the application's own JWT. Google credentials are not accepted as API authorization tokens.
