@@ -71,7 +71,7 @@ Use the linked wireframe for a 3-5 minute recording:
 2. Show the dashboard scan and explain the KPI hierarchy.
 3. Apply region and period filters, then drill into the highlighted site.
 4. Explain the plot comparison and observation history.
-5. Open Add observation, demonstrate the upload/manual entry path, and point out validation.
+5. Open Upload observations, download the CSV template, choose an active site, and explain the row and file validation.
 6. Show the empty and error recovery states and close with the end-to-end decision flow.
 
 ### Google OAuth setup
