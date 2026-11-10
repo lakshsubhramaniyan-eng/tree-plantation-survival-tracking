@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AuthScreen } from './components/AuthScreen'
+import { AiNoteAssistant } from './components/AiNoteAssistant'
 import { FilterBar } from './components/FilterBar'
 import { MetricCard } from './components/MetricCard'
 import { ObservationUpload } from './components/ObservationUpload'
@@ -83,6 +84,7 @@ function App() {
       <div className="dashboard-content">
         <div className="page-heading"><div><p className="eyebrow">Wednesday, 23 September 2026</p><h1>Good morning, {username}</h1><p>Here is how your plantations are performing today.</p></div><button className="button button--primary" type="button" onClick={() => setIsUploadOpen(true)}>Upload observations</button></div>
         <FilterBar region={region} period={period} onRegionChange={setRegion} onPeriodChange={setPeriod} />
+        <AiNoteAssistant token={token} />
         <section className="metrics-grid" aria-label="Portfolio summary">
           <MetricCard label="Overall survival" value="82.4%" detail="Up 3.8% from last period" tone="positive" />
           <MetricCard label="Trees surviving" value="31,642" detail="of 38,400 planted" />

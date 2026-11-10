@@ -1,0 +1,79 @@
+.ai-note-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ai-note-badge {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--mint);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-note-description,
+.ai-note-footnote,
+.ai-note-message {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ai-note-label {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-note-panel textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: 11px 12px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  background: var(--white);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ai-note-panel textarea:focus-visible {
+  outline: 2px solid rgba(40, 115, 75, .3);
+  outline-offset: 2px;
+}
+
+.ai-note-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-note-actions .button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.ai-note-result {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.ai-note-message[role='status'] {
+  color: var(--green);
+}
+
+.ai-note-footnote {
+  margin: 0;
+  font-size: 11px;
+}
