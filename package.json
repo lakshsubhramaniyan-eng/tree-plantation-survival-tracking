@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx server/index.ts",
     "start": "tsx server/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsx --test tests/models.test.ts"
   },
   "keywords": [],
   "author": "",
