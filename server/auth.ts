@@ -182,3 +182,39 @@ router.get('/me', authenticateToken, async (_request, response, next) => {
 })
 
 export const authRouter = router
+router.post('/autocomplete', authenticateToken, async (request, response, next) => {
+  const body = request.body
+  const context = body !== null && typeof body === 'object' && !Array.isArray(body) ? (body as Record<string, unknown>).context : undefined
+  if (typeof context !== 'string' || context.trim().length < 10 || context.length > 600) {
+    response.status(400).json({ error: 'Describe the field observation in 10 to 600 characters' })
+    return
+  }
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) {
+    response.status(503).json({ error: 'AI autocomplete is not configured. Set GEMINI_API_KEY on the server.' })
+    return
+  }
+  try {
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: `Draft a concise field observation note for tree plantation monitoring using only these details. Do not invent measurements, causes, names, or actions. Return only a neutral professional note under 100 words. Details: ${context.trim()}` }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 180 } }),
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!aiResponse.ok) {
+      response.status(502).json({ error: 'The AI provider could not generate a suggestion. Try again later.' })
+      return
+    }
+
+    const result = await aiResponse.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }
+    const suggestion = result.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('').trim()
+    if (!suggestion) {
+      response.status(502).json({ error: 'The AI provider returned an empty suggestion. Try again.' })
+      return
+    }
+
+    response.json({ suggestion })
+  } catch (error) {
+    next(error)
+  }
+})
